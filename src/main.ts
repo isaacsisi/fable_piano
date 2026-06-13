@@ -171,7 +171,7 @@ card.append(audioHint, nowPlaying, keyboardScroll, controls.element);
 const mapping = el('div', 'mapping-hint');
 mapping.append(
   el('div', '', "A S D F G H J K L ; ' = C4 D4 E4 F4 G4 A4 B4 C5 D5 E5 F5"),
-  el('div', '', 'W E T Y U  /  O P ] = 黑键 C#4 D#4 F#4 G#4 A#4  /  C#5 D#5 F#5')
+  el('div', '', 'W E T Y U O P ] = C#4 D#4 F#4 G#4 A#4 C#5 D#5 F#5')
 );
 
 const glow1 = el('div', 'glow glow-1');
