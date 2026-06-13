@@ -1,0 +1,402 @@
+/* ===== 全局 ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0c0e16;
+  --card-bg: rgba(255, 255, 255, 0.06);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --text: #e7eaf3;
+  --text-dim: #8b91a7;
+  --accent: #6ea8ff;
+  --accent-2: #b08cff;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+#app {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 32px 16px;
+}
+
+/* ===== 背景光斑 ===== */
+.glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-1 {
+  width: 480px;
+  height: 480px;
+  background: #3b5bdb;
+  top: -120px;
+  left: -100px;
+}
+
+.glow-2 {
+  width: 420px;
+  height: 420px;
+  background: #7048e8;
+  bottom: -140px;
+  right: -80px;
+}
+
+/* ===== 标题 ===== */
+.title {
+  position: relative;
+  z-index: 1;
+  font-size: clamp(1.5rem, 4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-align: center;
+}
+
+/* ===== 玻璃拟态卡片 ===== */
+.piano-card {
+  position: relative;
+  z-index: 1;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 20px 24px 24px;
+  max-width: calc(100vw - 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ===== 音频启动提示 ===== */
+.audio-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--accent);
+  background: rgba(110, 168, 255, 0.1);
+  border: 1px solid rgba(110, 168, 255, 0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.audio-hint.hidden {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+  height: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+}
+
+/* ===== 正在播放显示 ===== */
+.now-playing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  font-size: 0.9rem;
+}
+
+.now-playing-label {
+  color: var(--text-dim);
+}
+
+.now-playing-notes {
+  font-family: 'Cascadia Code', Consolas, monospace;
+  color: var(--text-dim);
+  transition: color 0.15s;
+}
+
+.now-playing.has-notes .now-playing-notes {
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(110, 168, 255, 0.6);
+  animation: note-bounce 0.25s ease;
+}
+
+@keyframes note-bounce {
+  0% {
+    transform: translateY(2px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* ===== 键盘容器（移动端可横向滚动） ===== */
+.keyboard-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
+  /* 阻止浏览器接管触摸手势，保证触摸弹奏体验 */
+  touch-action: pan-x;
+}
+
+.piano-keyboard {
+  /* 键宽变量：黑键的 JS 定位（calc）依赖这两个值 */
+  --white-key-width: 56px;
+  --black-key-width: 36px;
+  position: relative;
+  display: flex;
+  width: max-content;
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== 琴键通用 ===== */
+.piano-key {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: pointer;
+  transition:
+    transform 0.06s ease,
+    background 0.1s ease,
+    box-shadow 0.1s ease;
+}
+
+/* ===== 白键 ===== */
+.piano-key.white {
+  width: var(--white-key-width);
+  height: 220px;
+  background: linear-gradient(180deg, #f6f7fa 0%, #e9ebf2 85%, #d8dbe6 100%);
+  border: 1px solid #c2c6d4;
+  border-radius: 0 0 8px 8px;
+  padding-bottom: 10px;
+  gap: 4px;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.35);
+}
+
+.piano-key.white:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+}
+
+.piano-key.white.active {
+  transform: translateY(4px) scale(0.99);
+  background: linear-gradient(180deg, #cfe1ff 0%, #a9c8ff 100%);
+  border-color: var(--accent);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 18px rgba(110, 168, 255, 0.55);
+}
+
+.piano-key.white .key-note {
+  font-size: 0.72rem;
+  color: #5a6075;
+  font-weight: 600;
+}
+
+.piano-key.white .key-kb {
+  font-size: 0.68rem;
+  color: #fff;
+  background: #6a7188;
+  border-radius: 4px;
+  min-width: 18px;
+  text-align: center;
+  padding: 1px 4px;
+  font-family: Consolas, monospace;
+}
+
+/* ===== 黑键 ===== */
+.piano-key.black {
+  position: absolute;
+  top: 0;
+  width: var(--black-key-width);
+  height: 135px;
+  background: linear-gradient(180deg, #2a2d3a 0%, #14161f 70%, #090a10 100%);
+  border: 1px solid #000;
+  border-radius: 0 0 6px 6px;
+  padding-bottom: 8px;
+  z-index: 2;
+  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.6);
+}
+
+.piano-key.black:hover {
+  box-shadow: 0 7px 12px rgba(0, 0, 0, 0.7);
+}
+
+.piano-key.black.active {
+  transform: translateY(3px) scale(0.98);
+  background: linear-gradient(180deg, #4a5170 0%, #2c3148 100%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(176, 140, 255, 0.5);
+}
+
+.piano-key.black .key-note {
+  display: none; /* 黑键太窄，只显示键盘按键 */
+}
+
+.piano-key.black .key-kb {
+  font-size: 0.65rem;
+  color: #aab0c5;
+  font-family: Consolas, monospace;
+}
+
+/* ===== 控制面板 ===== */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  padding-top: 4px;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.control-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.volume-slider {
+  width: 120px;
+  accent-color: var(--accent);
+}
+
+.octave-label {
+  font-size: 0.85rem;
+  min-width: 78px;
+  text-align: center;
+  font-family: Consolas, monospace;
+  color: var(--accent);
+}
+
+.sustain-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text-dim);
+}
+
+.sustain-toggle input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.08s, box-shadow 0.15s;
+}
+
+.btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-record.recording {
+  background: rgba(255, 82, 82, 0.25);
+  border-color: rgba(255, 82, 82, 0.6);
+  color: #ff8080;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 82, 82, 0);
+  }
+}
+
+.record-info {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* ===== 底部键盘映射说明 ===== */
+.mapping-hint {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.8;
+  color: var(--text-dim);
+  font-family: Consolas, monospace;
+}
+
+/* ===== 移动端 ===== */
+@media (max-width: 720px) {
+  #app {
+    gap: 18px;
+    padding: 20px 8px;
+  }
+
+  .piano-card {
+    padding: 14px 12px 16px;
+  }
+
+  .piano-keyboard {
+    --white-key-width: 48px;
+    --black-key-width: 30px;
+  }
+
+  .piano-key.white {
+    height: 180px;
+  }
+
+  .piano-key.black {
+    height: 110px;
+  }
+}
